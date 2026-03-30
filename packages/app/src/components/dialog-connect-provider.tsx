@@ -189,6 +189,33 @@ export function DialogConnectProvider(props: { provider: string }) {
           if (!alive.value) return
           dispatch({ type: "auth.error", error: formatError(e, language.t("common.requestFailed")) })
         })
+      return
+    }
+
+    if (method.type === "api") {
+      if (method.prompts?.length && !inputs) {
+        dispatch({ type: "auth.prompt" })
+        return
+      }
+      if (!inputs) return
+      dispatch({ type: "auth.pending" })
+      await globalSDK.client.provider.oauth
+        .authorize(
+          {
+            providerID: props.provider,
+            method: index,
+            inputs,
+          },
+          { throwOnError: true },
+        )
+        .then(() => {
+          if (!alive.value) return
+          complete()
+        })
+        .catch((e) => {
+          if (!alive.value) return
+          dispatch({ type: "auth.error", error: formatError(e, language.t("common.requestFailed")) })
+        })
     }
   }
 
@@ -200,7 +227,7 @@ export function DialogConnectProvider(props: { provider: string }) {
 
     const prompts = createMemo<NonNullable<ProviderAuthMethod["prompts"]>>(() => {
       const value = method()
-      if (value?.type !== "oauth") return []
+      if (value?.type !== "oauth" && value?.type !== "api") return []
       return value.prompts ?? []
     })
     const matches = (prompt: NonNullable<ReturnType<typeof prompts>[number]>, value: Record<string, string>) => {

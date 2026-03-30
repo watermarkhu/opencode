@@ -170,7 +170,6 @@ export namespace ProviderAuth {
       }) {
         const { hooks, pending } = yield* InstanceState.get(state)
         const method = hooks[input.providerID].methods[input.method]
-        if (method.type !== "oauth") return
 
         if (method.prompts && input.inputs) {
           for (const prompt of method.prompts) {
@@ -181,12 +180,27 @@ export namespace ProviderAuth {
           }
         }
 
-        const result = yield* Effect.promise(() => method.authorize(input.inputs))
-        pending.set(input.providerID, result)
-        return {
-          url: result.url,
-          method: result.method,
-          instructions: result.instructions,
+        if (method.type === "api") {
+          if (!method.authorize) return
+          const result = yield* Effect.promise(() => method.authorize!(input.inputs))
+          if (!result || result.type !== "success") return yield* Effect.fail(new OauthCallbackFailed({}))
+          const endpoint = (result as any).endpoint
+          yield* auth.set(input.providerID, {
+            type: "api",
+            key: result.key,
+            ...(endpoint && { endpoint }),
+          })
+          return
+        }
+
+        if (method.type === "oauth") {
+          const result = yield* Effect.promise(() => method.authorize(input.inputs))
+          pending.set(input.providerID, result)
+          return {
+            url: result.url,
+            method: result.method,
+            instructions: result.instructions,
+          }
         }
       })
 

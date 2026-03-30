@@ -105,6 +105,30 @@ export function createDialogProviderOptions() {
             }
           }
           if (method.type === "api") {
+            if (method.prompts?.length) {
+              const inputs = await PromptsMethod({
+                dialog,
+                prompts: method.prompts,
+              })
+              if (!inputs) return
+              const result = await sdk.client.provider.oauth.authorize({
+                providerID: provider.id,
+                method: index,
+                inputs,
+              })
+              if (result.error) {
+                toast.show({
+                  variant: "error",
+                  message: JSON.stringify(result.error),
+                })
+                dialog.clear()
+                return
+              }
+              await sdk.client.instance.dispose()
+              await sync.bootstrap()
+              dialog.replace(() => <DialogModel providerID={provider.id} />)
+              return
+            }
             return dialog.replace(() => <ApiMethod providerID={provider.id} title={method.label} />)
           }
         },

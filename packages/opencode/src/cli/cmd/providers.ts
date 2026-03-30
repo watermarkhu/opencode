@@ -155,9 +155,11 @@ async function handlePluginAuth(plugin: { auth: PluginAuth }, provider: string, 
       }
       if (result.type === "success") {
         const saveProvider = result.provider ?? provider
+        const endpoint = (result as any).endpoint
         await Auth.set(saveProvider, {
           type: "api",
           key: result.key,
+          ...(endpoint && { endpoint }),
         })
         prompts.log.success("Login successful")
       }
