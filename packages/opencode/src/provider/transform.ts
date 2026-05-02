@@ -865,7 +865,9 @@ export function options(input: {
 
   if (input.model.api.npm === "@ai-sdk/azure") {
     result["store"] = true
-    result["promptCacheKey"] = input.sessionID
+    if (!input.providerOptions?.disableCacheKey) {
+      result["promptCacheKey"] = input.sessionID
+    }
   }
 
   if (input.model.api.npm === "@openrouter/ai-sdk-provider" || input.model.api.npm === "@llmgateway/ai-sdk-provider") {

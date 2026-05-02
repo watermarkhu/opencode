@@ -87,6 +87,9 @@ export const Info = Schema.Struct({
         setCacheKey: Schema.optional(Schema.Boolean).annotate({
           description: "Enable promptCacheKey for this provider (default false)",
         }),
+        disableCacheKey: Schema.optional(Schema.Boolean).annotate({
+          description: "Disable promptCacheKey for this provider (default false)",
+        }),
         timeout: Schema.optional(
           Schema.Union([PositiveInt, Schema.Literal(false)]).annotate({
             description:
